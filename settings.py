@@ -13,13 +13,13 @@ class BaseSettings:
 class DevSettings(BaseSettings):
     """Developer settings"""
     df = pd.read_csv(r"C:\Users\gianm\OneDrive\Desktop\ticker.csv")
-    live_price = 8.3240
+    live_price = 8.25      # 8.2591 near bottom       # 8.4723 near top     # 8.3240
 
 
 @dataclass(frozen=True)
 class ProdSettings(BaseSettings):
     """Production settings"""
-    ticker = 'STLAM.MI'
+    ticker = 'PDD'
     period = "1mo"
     interval = "30m"
     df = yf.Ticker(ticker).history(period=period, interval=interval)
