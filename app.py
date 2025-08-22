@@ -59,7 +59,9 @@ if ticker:
         if "Sell" in verdict:
             st.error(f"Overall recommendation: {verdict}")
 
+    except IndexError:
+        st.warning("No trends found")
     except Exception as e:
-        st.error(e)
+        st.error(f"Error {e} - Contact Gim")
 else:
     st.info("👆 Enter a ticker and press Enter to start")
