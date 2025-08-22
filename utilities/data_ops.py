@@ -5,6 +5,15 @@ from utilities import graph
 
 
 def data_prep(df):
+    """
+    Prepares the DataFrame to have all needed information.
+
+    Parameters:
+        df: File input (DataFrame).
+
+    Return:
+        df: Ready DataFrame.
+    """
     df = df.drop(['Open', 'Dividends', 'Volume', 'Stock Splits'], axis=1)
     df['Average'] = (df['High'] + df['Low']) / 2
     df['Datetime'] = pd.to_datetime(df['Datetime'])
@@ -35,7 +44,32 @@ def data_prep(df):
 
 
 def trend_finder(df, tolerance, time_margin):
+    """
+    Finds channels in trading data.
+
+    Parameters:
+        df: Input file (DataFrame).
+        tolerance:
+        time_margin:
+
+    Return:
+        bool: Whether a trend was found.
+        df: DataFrame.
+        channel_lines: Values of channel lines.
+        current_channel_limits: Most recent values of channel lines (upper and lower limits of channel).
+    """
     def find_matches(extreme_idx, col_name, is_peak):
+        """
+        Finds matching delta points among highs and lows.
+
+        Parameters:
+            extreme_idx: Highest/lowest point on graph.
+            col_name: Column name for High/Low value.
+            is_peak: Whether is High or Low.
+
+        Return:
+             Furthest matching point.
+        """
         val = df.loc[extreme_idx, col_name]
         mask = (df.index < extreme_idx - time_margin) | (df.index > extreme_idx + time_margin)
         candidates = df.loc[mask, col_name]
@@ -50,7 +84,7 @@ def trend_finder(df, tolerance, time_margin):
 
         # furthest match
         furthest_idx = max(matches.index, key=lambda i: abs(i - extreme_idx))
-        return matches.loc[[furthest_idx]]  # still a Series
+        return matches.loc[[furthest_idx]]
 
     tolerance = tolerance/100
 
@@ -76,35 +110,32 @@ def trend_finder(df, tolerance, time_margin):
 
 def recommendations(live_price, current_channel_limits, df, own_it):
     def sell():
-        print("Sell")
         return "Sell", 'red'
 
     def buy():
-        print("Buy")
         return "Buy", "#21d952"
 
     def hold():
-        print("Hold")
         return "Hold", "grey"
     lower_line, upper_line = sorted(current_channel_limits)
 
     if live_price < lower_line:  # below lower line
-        if own_it:
+        if own_it == "Yes":
             advice, live_price_col = sell()
         else:
             advice, live_price_col = hold()
     elif lower_line <= live_price <= lower_line * 1.003:  # within +0.3% above lower line
-        if own_it:
+        if own_it == "Yes":
             advice, live_price_col = hold()
         else:
             advice, live_price_col = buy()
     elif live_price >= upper_line:  # above upper line
-        if own_it:
+        if own_it == "Yes":
             advice, live_price_col = hold()
         else:
             advice, live_price_col = buy()
     elif upper_line > live_price >= upper_line * 0.997:  # within -0.3% below upper line
-        if own_it:
+        if own_it == "Yes":
             advice, live_price_col = sell()
         else:
             advice, live_price_col = hold()
@@ -131,9 +162,9 @@ def final_verdict(trends):
 def show(df, live_price, show_graph, live_price_col=None, channel_lines=None):
     if channel_lines:
         if show_graph:
-            graph.plot(df, live_price, live_price_col, channel_lines)
-        return True
+            fig = graph.plot(df, live_price, live_price_col, channel_lines)
+            return fig
     else:
         if show_graph:
             graph.plot(df, live_price)
-        return False
+        return None

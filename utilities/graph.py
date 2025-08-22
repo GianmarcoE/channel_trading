@@ -4,34 +4,31 @@ import matplotlib.pyplot as plt
 
 # Plot
 def plot(df, live_price, live_price_col="black", channel_lines=None):
-    plt.figure(figsize=(12, 6))
-    plt.plot(df.index, df['Extreme'], marker='o')
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(df.index, df['Extreme'], marker='o')
 
     # keep at most ~10 labels
     step = max(1, len(df) // 10)
-    plt.xticks(
-        df.index[::step],
-        df['Datetime'].dt.strftime("%Y-%m-%d %H:%M")[::step],
-        rotation=45
-    )
+    ax.set_xticks(df.index[::step])
+    ax.set_xticklabels(df['Datetime'].dt.strftime("%Y-%m-%d %H:%M")[::step], rotation=45)
 
     # live price point
     live_x = df.index.max() + 1
-    plt.scatter(live_x, live_price, color=live_price_col)
+    ax.scatter(live_x, live_price, color=live_price_col)
 
     # channel lines if present
     if channel_lines:
         for x_vals, y_vals in channel_lines:
-            # extend slope to one more index (live_x)
             slope = (y_vals[-1] - y_vals[0]) / (x_vals[-1] - x_vals[0])
             intercept = y_vals[0] - slope * x_vals[0]
             x_extended = np.append(x_vals, live_x)
             y_extended = slope * x_extended + intercept
-            plt.plot(x_extended, y_extended, 'r-')
+            ax.plot(x_extended, y_extended, 'r-')
 
-    plt.grid()
-    plt.tight_layout()
-    plt.show()
+    ax.grid()
+    fig.tight_layout()
+    return fig  # <--- return the figure object
+    # plt.show()
 
 
 def find_channel_lines(df, match, ref_idx):
