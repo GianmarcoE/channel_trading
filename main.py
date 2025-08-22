@@ -16,7 +16,7 @@ def main(df, live_price, whole_df=False, show_graph=True, own_it="No"):
             iterations += 1
             df_slice = df.tail(i)
             df_slice = data_prep(df_slice)
-            trend, df_slice, channel_lines, current_channel_limits = trend_finder(df_slice, 4.3, 2)
+            trend, df_slice, channel_lines, current_channel_limits = trend_finder(df_slice, 4.3, 6)
             if trend:
                 trend_counter += 1
                 df_slice, live_price_col, advice = recommendations(live_price, current_channel_limits, df_slice, own_it)
