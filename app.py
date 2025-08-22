@@ -9,8 +9,8 @@ st.title("Find trading channel patterns")
 ticker = st.text_input("Stock Name (Ticker - as in Yahoo Finance):")
 own_it = st.radio("Do you own this stock already?", ["No", "Yes"])
 
-period = "1mo"
-interval = "30m"
+period = "6mo"
+interval = "1h"
 
 # --- Session state for carousel ---
 if "fig_index" not in st.session_state:

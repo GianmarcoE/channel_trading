@@ -118,13 +118,15 @@ def recommendations(live_price, current_channel_limits, df, own_it):
     def hold():
         return "Hold", "grey"
     lower_line, upper_line = sorted(current_channel_limits)
+    upper_range_start = lower_line + 0.8 * (upper_line - lower_line)  # 80% of channel range
+    lower_range_start = lower_line + 0.2 * (upper_line - lower_line)  # 20% of channel range
 
     if live_price < lower_line:  # below lower line
         if own_it == "Yes":
             advice, live_price_col = sell()
         else:
             advice, live_price_col = hold()
-    elif lower_line <= live_price <= lower_line * 1.003:  # within +0.3% above lower line
+    elif lower_line <= live_price <= lower_range_start:  # low 0-20% of channel
         if own_it == "Yes":
             advice, live_price_col = hold()
         else:
@@ -134,7 +136,7 @@ def recommendations(live_price, current_channel_limits, df, own_it):
             advice, live_price_col = hold()
         else:
             advice, live_price_col = buy()
-    elif upper_line > live_price >= upper_line * 0.997:  # within -0.3% below upper line
+    elif upper_line >= live_price >= upper_range_start:  # high 80-100% of channel
         if own_it == "Yes":
             advice, live_price_col = sell()
         else:
