@@ -49,8 +49,8 @@ def trend_finder(df, tolerance, time_margin):
 
     Parameters:
         df: Input file (DataFrame).
-        tolerance:
-        time_margin:
+        tolerance: Max channel line sloping variation from interpolation line.
+        time_margin: Minimum gap between two peaks.
 
     Return:
         bool: Whether a trend was found.
@@ -70,20 +70,31 @@ def trend_finder(df, tolerance, time_margin):
         Return:
              Furthest matching point.
         """
-        val = df.loc[extreme_idx, col_name]
+        val = df.loc[extreme_idx, col_name]  # value of max/min delta point
+        # Exclude records within minimum time gap
         mask = (df.index < extreme_idx - time_margin) | (df.index > extreme_idx + time_margin)
-        candidates = df.loc[mask, col_name]
+        candidates = df.loc[mask, col_name]  # Delta values to be taken into considerations
 
-        if is_peak:
-            matches = candidates[np.abs(candidates - val) / val <= tolerance]
-        else:
-            matches = candidates[np.abs(candidates - val) / abs(val) <= tolerance]
+        matches = candidates[np.abs(candidates - val) / abs(val) <= tolerance]
+
+        # if is_peak:
+        #     matches = candidates[np.abs(candidates - val) / val <= tolerance]
+        # else:
+        #     matches = candidates[np.abs(candidates - val) / abs(val) <= tolerance]
 
         if matches.empty:
             return None
 
-        # furthest match
+        # Furthest match
         furthest_idx = max(matches.index, key=lambda i: abs(i - extreme_idx))
+        furthest_val = matches.loc[furthest_idx]
+
+        #  --------TEST IF WORTH KEEPING OR NOT------
+        # # Post-check: reject if any delta is outside range line
+        # df_excluding_extreme = df.drop(index=extreme_idx)  # Exclude extreme value
+        # if (df_excluding_extreme[col_name].abs() > abs(furthest_val)).any():
+        #     return None
+
         return matches.loc[[furthest_idx]]
 
     tolerance = tolerance/100
@@ -100,6 +111,22 @@ def trend_finder(df, tolerance, time_margin):
     match_valley = find_matches(valley_idx, "Delta_Valley", False)
 
     channel_lines = graph.draw_channel_lines(match_peak, match_valley, df, peak_idx, valley_idx, peak_row, valley_row)
+
+    # upper line check
+    if channel_lines is not None:
+        x_vals_upper, y_vals_upper = channel_lines[0]
+        for x, y in zip(x_vals_upper, y_vals_upper):
+            if df.loc[x, "Extreme"] > y:
+                channel_lines = None
+                break
+
+    # lower line check
+    if channel_lines is not None:
+        x_vals_lower, y_vals_lower = channel_lines[1]
+        for x, y in zip(x_vals_lower, y_vals_lower):
+            if df.loc[x, "Extreme"] < y:
+                channel_lines = None
+                break
 
     if channel_lines:
         current_channel_limits = [float(channel_lines[0][-1][-1]), float(channel_lines[1][-1][-1])]
