@@ -58,6 +58,7 @@ def trend_finder(df, tolerance, time_margin):
         channel_lines: Values of channel lines.
         current_channel_limits: Most recent values of channel lines (upper and lower limits of channel).
     """
+
     def find_matches(extreme_idx, col_name, is_peak):
         """
         Finds matching delta points among highs and lows.
@@ -65,37 +66,32 @@ def trend_finder(df, tolerance, time_margin):
         Parameters:
             extreme_idx: Highest/lowest point on graph.
             col_name: Column name for High/Low value.
-            is_peak: Whether is High or Low.
+            is_peak: Whether it’s a High or Low.
 
         Return:
-             Furthest matching point.
+             Furthest matching point (Series with one row) or None.
         """
         val = df.loc[extreme_idx, col_name]  # value of max/min delta point
+
         # Exclude records within minimum time gap
         mask = (df.index < extreme_idx - time_margin) | (df.index > extreme_idx + time_margin)
-        candidates = df.loc[mask, col_name]  # Delta values to be taken into considerations
+        candidates = df.loc[mask, col_name]
 
+        # Filter candidates within tolerance
         matches = candidates[np.abs(candidates - val) / abs(val) <= tolerance]
-
-        # if is_peak:
-        #     matches = candidates[np.abs(candidates - val) / val <= tolerance]
-        # else:
-        #     matches = candidates[np.abs(candidates - val) / abs(val) <= tolerance]
-
         if matches.empty:
             return None
 
-        # Furthest match
-        furthest_idx = max(matches.index, key=lambda i: abs(i - extreme_idx))
-        furthest_val = matches.loc[furthest_idx]
+        # Exclude the first candidate record from matches
+        first_candidate_idx = candidates.index[0]
+        valid_matches = matches.drop(index=first_candidate_idx, errors="ignore")
+        if valid_matches.empty:
+            return None
 
-        #  --------TEST IF WORTH KEEPING OR NOT------
-        # # Post-check: reject if any delta is outside range line
-        # df_excluding_extreme = df.drop(index=extreme_idx)  # Exclude extreme value
-        # if (df_excluding_extreme[col_name].abs() > abs(furthest_val)).any():
-        #     return None
+        # Furthest match (not the first candidate)
+        furthest_idx = max(valid_matches.index, key=lambda i: abs(i - extreme_idx))
 
-        return matches.loc[[furthest_idx]]
+        return valid_matches.loc[[furthest_idx]]
 
     tolerance = tolerance/100
 

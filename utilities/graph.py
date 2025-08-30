@@ -1,3 +1,5 @@
+import datetime
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -9,11 +11,15 @@ def plot(df, live_price, live_price_col="black", channel_lines=None):
 
     # keep at most ~10 labels
     step = max(1, len(df) // 10)
-    ax.set_xticks(df.index[::step])
-    ax.set_xticklabels(df['Datetime'].dt.strftime("%Y-%m-%d %H:%M")[::step], rotation=45)
+    live_x = df.index.max() + 1
+    ax.set_xticks(list(df.index[::step]) + [live_x])  # add live_x to the ticks
+
+    labels = list(df['Datetime'].dt.strftime("%d/%m")[::step])
+    labels.append(datetime.datetime.now().strftime("%d/%m"))  # label for live_x
+
+    ax.set_xticklabels(labels)
 
     # live price point
-    live_x = df.index.max() + 1
     ax.scatter(live_x, live_price, color=live_price_col)
 
     # channel lines if present
